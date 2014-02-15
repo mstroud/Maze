@@ -8,7 +8,8 @@
 #define PI 3.14159265
 
 void ProcessEvents(sf::RenderWindow &window);
-void Render(sf::RenderWindow &window, struct Player player);
+void Render2d(sf::RenderWindow &window, struct Player player);
+void Render3d(sf::RenderWindow &window);
 void Rotate(struct Player *player, int dir);
 void RotateArb(struct Player *player, float angle);
 void Move(struct Player *player, int dir);
@@ -18,6 +19,8 @@ void CastRays(struct Player *player, struct Vec2d rays[], int level[][LEVELHORIZ
 void DebugRays();
 float VectorLength(struct Vec2d vec1, struct Vec2d vec2);
 void CalcRayDistances();
+
+int renderType = 1;
 
 struct Vec2d
 {
@@ -38,8 +41,8 @@ struct Player
 };
 
 struct Player player;
-struct Vec2d rays[480];
-float distances[480];
+struct Vec2d rays[640];
+float distances[640];
 
 int main()
 {
@@ -63,7 +66,8 @@ int main()
 		ProcessEvents(window);
 		CastRays(&player, rays, level);
 		CalcRayDistances();
-		Render(window, player);
+		if (renderType > 0){ Render2d(window, player); }
+		else { Render3d(window); }
 	}
 
 	return 0;
@@ -122,11 +126,16 @@ void ProcessEvents(sf::RenderWindow &window)
 			{
 				DebugRays();
 			}
+
+			if (event.key.code == sf::Keyboard::Q)
+			{
+				renderType *= -1;
+			}
 		}
 	}
 }
 
-void Render(sf::RenderWindow &window, struct Player player)
+void Render2d(sf::RenderWindow &window, struct Player player)
 {
 	/* Clear the window. */
 	window.clear();
@@ -169,7 +178,7 @@ void Render(sf::RenderWindow &window, struct Player player)
 	
 
 	int i = 0;
-	for (i = 0; i < 480; i++)
+	for (i = 0; i < 640; i++)
 	{
 		sf::Vector2f lineFrom(player.location.x + playerCircleRadius, player.location.y + playerCircleRadius);
 		sf::Vector2f lineTo(rays[i].x, rays[i].y);
@@ -183,6 +192,27 @@ void Render(sf::RenderWindow &window, struct Player player)
 	}
 
 	/* Display what's been drawn to the screen. */
+	window.display();
+}
+
+void Render3d(sf::RenderWindow &window)
+{
+	window.clear();
+	int i = 0;
+	float height = 0;
+	for (i = 0; i < 640; i++)
+	{
+		height = (20.0 / distances[i]) * 800.0;
+		sf::Vector2f lineFrom((float)i, 240.0 - (height / 2.0));
+		sf::Vector2f lineTo((float)i, 240.0 + (height / 2.0));
+		sf::Vertex line[] =
+		{
+			sf::Vertex(lineFrom, sf::Color::Red),
+			sf::Vertex(lineTo, sf::Color::Blue)
+		};
+		window.draw(line, 2, sf::Lines);
+	}
+
 	window.display();
 }
 
@@ -280,12 +310,12 @@ void CastRays(struct Player *player, struct Vec2d rays[], int level[][LEVELHORIZ
 	RotateArb(&rayPlayer, -30);
 
 	/* Ok let's set the rotation angle to .125 degrees. */
-	rayPlayer.turningSpeed = ((float)PI / 180.f) * .125;
+	rayPlayer.turningSpeed = ((float)PI / 180.f) * .09375;
 	
 	int hit = 0, attempt = 0;
 	int i = 0, rayWall = 0, rayBounds = 0;
 
-	for (i = 0; i < 480; i++)
+	for (i = 0; i < 640; i++)
 	{
 		hit = 0;
 		rayPlayer.location.x = player->location.x;
@@ -313,7 +343,7 @@ void CastRays(struct Player *player, struct Vec2d rays[], int level[][LEVELHORIZ
 			attempt++;
 			//if (attempt > 50) { hit = 1; }
 		}
-		RotateArb(&rayPlayer, 0.125);
+		RotateArb(&rayPlayer, 0.09375);
 	}
 
 
@@ -338,7 +368,7 @@ float VectorLength(struct Vec2d vec1, struct Vec2d vec2)
 void CalcRayDistances()
 {
 	int i = 0;
-	for (i = 0; i < 480; i++)
+	for (i = 0; i < 640; i++)
 	{
 		distances[i] = VectorLength(player.location, rays[i]);
 	}
