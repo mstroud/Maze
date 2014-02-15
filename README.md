@@ -8,8 +8,11 @@ I consider this project finished. The next iteration will use a proper game loop
 
 Keys:
 W - Forward
+
 A - Turn Counter-Clockwise
+
 S - Backwards
+
 D - Turn Clockwise
 
 Q - Toggle between 2d and 3d
