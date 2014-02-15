@@ -200,9 +200,15 @@ void Render3d(sf::RenderWindow &window)
 	window.clear();
 	int i = 0;
 	float height = 0;
+
+	/* Draw 640 vertical lines across the screen that correspond to the height of the
+	wall that was detected */
 	for (i = 0; i < 640; i++)
 	{
+		/* Unfortunately a lot of the height equation numbers are voodoo. I tweaked them until they
+		looked right on screen. I'm not using a proper view window, so this is a consequence. */
 		height = (20.0 / distances[i]) * 800.0;
+
 		sf::Vector2f lineFrom((float)i, 240.0 - (height / 2.0));
 		sf::Vector2f lineTo((float)i, 240.0 + (height / 2.0));
 		sf::Vertex line[] =
@@ -291,45 +297,46 @@ int isInsideWall(float x, float y, int level[][LEVELHORIZONTAL])
 
 void CastRays(struct Player *player, struct Vec2d rays[], int level[][LEVELHORIZONTAL])
 {
-	/* Here's the tricky part. I need to cast 480 rays in a 60 degree arc in the direction
+	/* Here's the tricky part. I need to cast 640 rays in a 60 degree arc in the direction
 	of the player, and then store the end points in the rays array for later rendering or
 	drawing of walls. */
 
-	/* Let's start by setting a ray casting start point to be -30 degrees from the player's
-	direction vector. */
-
+	/* I'm treating the rays like a player moving forward until it hits a wall,
+	so I'm going to set up rayPlayer to have the same location and direction as the player. */
 	struct Player rayPlayer;
 	rayPlayer.location.x = player->location.x;
 	rayPlayer.location.y = player->location.y;
 	rayPlayer.direction.x = player->direction.x;
 	rayPlayer.direction.y = player->direction.y;
-	/* We want to step 30 degrees the first time. */
-
-	rayPlayer.movementSpeed = .01;
-
+	
+	/* Let's start by setting a ray casting start point to be -30 degrees from the player's
+	direction vector. */
 	RotateArb(&rayPlayer, -30);
 
-	/* Ok let's set the rotation angle to .125 degrees. */
-	rayPlayer.turningSpeed = ((float)PI / 180.f) * .09375;
-	
-	int hit = 0, attempt = 0;
-	int i = 0, rayWall = 0, rayBounds = 0;
+	int hit = 0;
+	int i = 0;
 
 	for (i = 0; i < 640; i++)
 	{
+		/* Each iteration through the loop resets the hit status, and resets the
+		rayPlayer back to the player location. */
 		hit = 0;
+		
 		rayPlayer.location.x = player->location.x;
 		rayPlayer.location.y = player->location.y;
 
 		while (!hit)
 		{
+			/* Cast the ray forward by 1. */
 			MoveArb(&rayPlayer, 1);
+			
+			/* Check to see if the ray is inside the wall, or past the level boundaries. 
+			If so, record the position and set hit=1*/
 			if (isInsideWall(rayPlayer.location.x, rayPlayer.location.y, level))
 			{
 				rays[i].x = rayPlayer.location.x;
 				rays[i].y = rayPlayer.location.y;
 				hit = 1;
-				rayWall++;
 			}
 
 			if (rayPlayer.location.x > HORIZONTAL || rayPlayer.location.y > VERTICAL)
@@ -337,12 +344,10 @@ void CastRays(struct Player *player, struct Vec2d rays[], int level[][LEVELHORIZ
 				rays[i].x = rayPlayer.location.x;
 				rays[i].y = rayPlayer.location.y;
 				hit = 1;
-				rayBounds++;
 			}
-
-			attempt++;
-			//if (attempt > 50) { hit = 1; }
 		}
+
+		/* Rotate the rayPlayer so that it will start casting along a new direction. */
 		RotateArb(&rayPlayer, 0.09375);
 	}
 
