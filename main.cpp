@@ -12,8 +12,10 @@ void Render(sf::RenderWindow &window, struct Player player);
 void Rotate(struct Player *player, int dir);
 void RotateArb(struct Player *player, float angle);
 void Move(struct Player *player, int dir);
+void MoveArb(struct Player *player, int distance);
 int isInsideWall(float x, float y, int level[][LEVELHORIZONTAL]);
 void CastRays(struct Player *player, struct Vec2d rays[], int level[][LEVELHORIZONTAL]);
+void DebugRays();
 
 struct Vec2d
 {
@@ -91,6 +93,31 @@ void ProcessEvents(sf::RenderWindow &window)
 			{
 				Move(&player, -1);
 			}
+
+			if (event.key.code == sf::Keyboard::J)
+			{
+				RotateArb(&player, -30);
+			}
+
+			if (event.key.code == sf::Keyboard::L)
+			{
+				RotateArb(&player, .125);
+			}
+
+			if (event.key.code == sf::Keyboard::I)
+			{
+				MoveArb(&player, 1);
+				if (isInsideWall(player.location.x, player.location.y, level))
+				{
+					printf("Inside a wall.\n");
+				}
+				else { printf("\n"); }
+			}
+			
+			if (event.key.code == sf::Keyboard::R)
+			{
+				DebugRays();
+			}
 		}
 	}
 }
@@ -138,7 +165,7 @@ void Render(sf::RenderWindow &window, struct Player player)
 	window.draw(line, 2, sf::Lines);
 
 	int i = 0;
-	for (i = 0; i < 1; i++)
+	for (i = 0; i < 480; i++)
 	{
 		sf::Vector2f lineFrom(player.location.x + playerCircleRadius, player.location.y + playerCircleRadius);
 		sf::Vector2f lineTo(rays[i].x, rays[i].y);
@@ -197,6 +224,18 @@ void Move(struct Player *player, int dir)
 	player->location.y = newY;
 }
 
+void MoveArb(struct Player *player, int distance)
+{
+	/* Negative direction is backwards. */
+	float movement = distance;
+	
+	/* Apply movement along the player direction to the location. */
+	float newX = player->location.x + (player->direction.x * movement);
+	float newY = player->location.y + (player->direction.y * movement);
+	player->location.x = newX;
+	player->location.y = newY;
+}
+
 int isInsideWall(float x, float y, int level[][LEVELHORIZONTAL])
 {
 	/* Transform the pixel location to a location in the level array. */
@@ -205,13 +244,11 @@ int isInsideWall(float x, float y, int level[][LEVELHORIZONTAL])
 
 	if (level[(int)levelY][(int)levelX] > 0)
 	{
-		printf("Inside Wall X: %f, Y:%f\n", levelX, levelY);
 		//printf("%i\n", level[(int)levelY][(int)levelX]);
 		return 1;
 	}
 	else
 	{
-		printf("NOT Inside Wall X: %f, Y:%f\n", levelX, levelY);
 		return 0;
 	}
 	return 0;
@@ -235,7 +272,7 @@ void CastRays(struct Player *player, struct Vec2d rays[], int level[][LEVELHORIZ
 
 	rayPlayer.movementSpeed = .01;
 
-	RotateArb(&rayPlayer, 30);
+	RotateArb(&rayPlayer, -30);
 
 	/* Ok let's set the rotation angle to .125 degrees. */
 	rayPlayer.turningSpeed = ((float)PI / 180.f) * .125;
@@ -243,7 +280,7 @@ void CastRays(struct Player *player, struct Vec2d rays[], int level[][LEVELHORIZ
 	int hit = 0, attempt = 0;
 	int i = 0, rayWall = 0, rayBounds = 0;
 
-	for (i = 0; i < 1; i++)
+	for (i = 0; i < 480; i++)
 	{
 		hit = 0;
 		rayPlayer.location.x = player->location.x;
@@ -251,7 +288,7 @@ void CastRays(struct Player *player, struct Vec2d rays[], int level[][LEVELHORIZ
 
 		while (!hit)
 		{
-			//Move(&rayPlayer, 0);
+			MoveArb(&rayPlayer, 1);
 			if (isInsideWall(rayPlayer.location.x, rayPlayer.location.y, level))
 			{
 				rays[i].x = rayPlayer.location.x;
@@ -269,11 +306,19 @@ void CastRays(struct Player *player, struct Vec2d rays[], int level[][LEVELHORIZ
 			}
 
 			attempt++;
-			if (attempt > 50) { hit = 1; }
+			//if (attempt > 50) { hit = 1; }
 		}
-		//RotateArb(&rayPlayer, -0.125);
+		RotateArb(&rayPlayer, 0.125);
 	}
-	printf("Wall: %i, Bounds: %i\n", rayWall, rayBounds);
 
 
+}
+
+void DebugRays()
+{
+	int i;
+	for (i = 0; i < 480; i++)
+	{
+		printf("R: %i RX: %f, RY: %f\n", i, rays[i].x, rays[i].y);
+	}
 }
