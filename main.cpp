@@ -16,6 +16,8 @@ void MoveArb(struct Player *player, int distance);
 int isInsideWall(float x, float y, int level[][LEVELHORIZONTAL]);
 void CastRays(struct Player *player, struct Vec2d rays[], int level[][LEVELHORIZONTAL]);
 void DebugRays();
+float VectorLength(struct Vec2d vec1, struct Vec2d vec2);
+void CalcRayDistances();
 
 struct Vec2d
 {
@@ -37,6 +39,7 @@ struct Player
 
 struct Player player;
 struct Vec2d rays[480];
+float distances[480];
 
 int main()
 {
@@ -59,6 +62,7 @@ int main()
 	{
 		ProcessEvents(window);
 		CastRays(&player, rays, level);
+		CalcRayDistances();
 		Render(window, player);
 	}
 
@@ -159,10 +163,10 @@ void Render(sf::RenderWindow &window, struct Player player)
 	sf::Vector2f lineTo(player.location.x + (player.direction.x * playerDirectionLineLength) + playerCircleRadius, player.location.y + (player.direction.y * playerDirectionLineLength) + playerCircleRadius);
 	sf::Vertex line[] =
 	{
-		sf::Vertex(lineFrom),
+		sf::Vertex(lineFrom, sf::Color::Green),
 		sf::Vertex(lineTo)
 	};
-	window.draw(line, 2, sf::Lines);
+	
 
 	int i = 0;
 	for (i = 0; i < 480; i++)
@@ -175,6 +179,7 @@ void Render(sf::RenderWindow &window, struct Player player)
 			sf::Vertex(lineTo)
 		};
 		window.draw(linex, 2, sf::Lines);
+		window.draw(line, 2, sf::Lines);
 	}
 
 	/* Display what's been drawn to the screen. */
@@ -320,5 +325,21 @@ void DebugRays()
 	for (i = 0; i < 480; i++)
 	{
 		printf("R: %i RX: %f, RY: %f\n", i, rays[i].x, rays[i].y);
+	}
+}
+
+float VectorLength(struct Vec2d vec1, struct Vec2d vec2)
+{
+	float dx = vec1.x - vec2.x;
+	float dy = vec1.y - vec2.y;
+	return sqrtf((dx * dx) + (dy * dy));
+}
+
+void CalcRayDistances()
+{
+	int i = 0;
+	for (i = 0; i < 480; i++)
+	{
+		distances[i] = VectorLength(player.location, rays[i]);
 	}
 }
