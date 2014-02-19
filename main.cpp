@@ -1,7 +1,12 @@
+#include <iostream>
+#include <SFML/System.hpp>
 #include <SFML/System/Vector2.hpp>
 #include <SFML/Graphics.hpp>
+#include <SFML/Network/IpAddress.hpp>
+#include <SFML/Network/UDPSocket.hpp>
 #include "level.h"
 #include "player.hpp"
+#include "server.hpp"
 
 #define HORIZONTAL 640
 #define VERTICAL 480
@@ -10,26 +15,42 @@
 #define PI 3.14159265
 
 void ProcessEvents(sf::RenderWindow &window);
-void Render2d(sf::RenderWindow &window, struct Player player);
+void Render2d(sf::RenderWindow &window, Player player);
 void Render3d(sf::RenderWindow &window);
-void Rotate(struct Player *player, int dir);
-void RotateArb(struct Player *player, float angle);
-void Move(struct Player *player, int dir);
-void MoveArb(struct Player *player, int distance);
+void Rotate(Player *player, int dir);
+void RotateArb(Player *player, float angle);
+void Move(Player *player, int dir);
+void MoveArb(Player *player, int distance);
 int isInsideWall(float x, float y, int level[][LEVELHORIZONTAL]);
-void CastRays(struct Player *player, sf::Vector2f rays[], int level[][LEVELHORIZONTAL]);
+void CastRays(Player *player, sf::Vector2f rays[], int level[][LEVELHORIZONTAL]);
 void DebugRays();
 float VectorLength(sf::Vector2f vec1, sf::Vector2f vec2);
 void CalcRayDistances();
 
 int renderType = 1;
 
-struct Player player;
+Server server(1234);
+Player player;
 sf::Vector2f rays[640];
 float distances[640];
 
 int main()
 {
+  sf::Thread thread(&Server::Listen, &server);
+
+// start the thread
+thread.launch();
+
+sf::sleep(sf::seconds(5.0f));
+sf::UdpSocket socket;
+socket.bind(1235);
+std::string message = "Hi, I am " + sf::IpAddress::getLocalAddress().toString();
+socket.send(message.c_str(), message.size() + 1, "127.0.0.1", 1234);
+
+// block execution until the thread is finished
+thread.wait();
+
+
 	/* Set the player in the center of the screen, and facing down.	Remember that our coordinates 
 	are in pixel locations, so the	location (0,0) is in the top left of the screen, and X increments
 	to the right and Y increments downwards. */
@@ -119,7 +140,7 @@ void ProcessEvents(sf::RenderWindow &window)
 	}
 }
 
-void Render2d(sf::RenderWindow &window, struct Player player)
+void Render2d(sf::RenderWindow &window, Player player)
 {
 	/* Clear the window. */
 	window.clear();
@@ -206,7 +227,7 @@ void Render3d(sf::RenderWindow &window)
 	window.display();
 }
 
-void Rotate(struct Player *player, int dir)
+void Rotate(Player *player, int dir)
 {
 	/* Negative angle is counter-clockwise. */
 	float angle = player->turningSpeed;
@@ -222,7 +243,7 @@ void Rotate(struct Player *player, int dir)
 	player->direction.y = newY;
 }
 
-void RotateArb(struct Player *player, float degrees)
+void RotateArb(Player *player, float degrees)
 {
 	/* Negative angle is counter-clockwise. */
 	float angle = ((float)PI / 180.0) * degrees;
@@ -233,7 +254,7 @@ void RotateArb(struct Player *player, float degrees)
 	player->direction.y = newY;
 }
 
-void Move(struct Player *player, int dir)
+void Move(Player *player, int dir)
 {
 	/* Negative direction is backwards. */
 	float movement = player->movementSpeed;
@@ -249,7 +270,7 @@ void Move(struct Player *player, int dir)
 	player->location.y = newY;
 }
 
-void MoveArb(struct Player *player, int distance)
+void MoveArb(Player *player, int distance)
 {
 	/* Negative direction is backwards. */
 	float movement = distance;
@@ -279,7 +300,7 @@ int isInsideWall(float x, float y, int level[][LEVELHORIZONTAL])
 	return 0;
 }
 
-void CastRays(struct Player *player, sf::Vector2f rays[], int level[][LEVELHORIZONTAL])
+void CastRays(Player *player, sf::Vector2f rays[], int level[][LEVELHORIZONTAL])
 {
 	/* Here's the tricky part. I need to cast 640 rays in a 60 degree arc in the direction
 	of the player, and then store the end points in the rays array for later rendering or
@@ -287,7 +308,7 @@ void CastRays(struct Player *player, sf::Vector2f rays[], int level[][LEVELHORIZ
 
 	/* I'm treating the rays like a player moving forward until it hits a wall,
 	so I'm going to set up rayPlayer to have the same location and direction as the player. */
-	struct Player rayPlayer;
+	Player rayPlayer;
 	rayPlayer.location.x = player->location.x;
 	rayPlayer.location.y = player->location.y;
 	rayPlayer.direction.x = player->direction.x;

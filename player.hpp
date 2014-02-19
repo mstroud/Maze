@@ -1,7 +1,14 @@
+#ifndef PLAYER_HPP
+#define PLAYER_HPP
+
+// Headers
 #include <SFML/System/Vector2.hpp>
 
-struct Player
+class Player
 {
+public:
+  //Player();
+	
 	/* Location on the screen. */
 	sf::Vector2f location;
 	/* Direction vector. */
@@ -11,3 +18,5 @@ struct Player
 	float movementSpeed;
 	float turningSpeed;
 };
+
+#endif PLAYER_HPP
