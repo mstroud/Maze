@@ -1,5 +1,7 @@
+#include <SFML/System/Vector2.hpp>
 #include <SFML/Graphics.hpp>
 #include "level.h"
+#include "player.hpp"
 
 #define HORIZONTAL 640
 #define VERTICAL 480
@@ -15,33 +17,15 @@ void RotateArb(struct Player *player, float angle);
 void Move(struct Player *player, int dir);
 void MoveArb(struct Player *player, int distance);
 int isInsideWall(float x, float y, int level[][LEVELHORIZONTAL]);
-void CastRays(struct Player *player, struct Vec2d rays[], int level[][LEVELHORIZONTAL]);
+void CastRays(struct Player *player, sf::Vector2f rays[], int level[][LEVELHORIZONTAL]);
 void DebugRays();
-float VectorLength(struct Vec2d vec1, struct Vec2d vec2);
+float VectorLength(sf::Vector2f vec1, sf::Vector2f vec2);
 void CalcRayDistances();
 
 int renderType = 1;
 
-struct Vec2d
-{
-	float x;
-	float y;
-} vec2d;
-
-struct Player
-{
-	/* Location on the screen. */
-	struct Vec2d location;
-	/* Direction vector. */
-	struct Vec2d direction;
-	/* Since this version of the game has no time keeping, just
-	adjust these numbers until they feel right :) */
-	float movementSpeed;
-	float turningSpeed;
-};
-
 struct Player player;
-struct Vec2d rays[640];
+sf::Vector2f rays[640];
 float distances[640];
 
 int main()
@@ -295,7 +279,7 @@ int isInsideWall(float x, float y, int level[][LEVELHORIZONTAL])
 	return 0;
 }
 
-void CastRays(struct Player *player, struct Vec2d rays[], int level[][LEVELHORIZONTAL])
+void CastRays(struct Player *player, sf::Vector2f rays[], int level[][LEVELHORIZONTAL])
 {
 	/* Here's the tricky part. I need to cast 640 rays in a 60 degree arc in the direction
 	of the player, and then store the end points in the rays array for later rendering or
@@ -363,7 +347,7 @@ void DebugRays()
 	}
 }
 
-float VectorLength(struct Vec2d vec1, struct Vec2d vec2)
+float VectorLength(sf::Vector2f vec1, sf::Vector2f vec2)
 {
 	float dx = vec1.x - vec2.x;
 	float dy = vec1.y - vec2.y;
